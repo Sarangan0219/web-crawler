@@ -40,7 +40,7 @@ public class CrawlWorker implements Runnable {
             }
 
         } catch (Exception e) {
-            log.error("❌ Error processing: {} — {}", url, e.getMessage());
+            log.error("Error processing: {} — {}", url, e.getMessage());
         } finally {
             manager.taskCompleted();
         }

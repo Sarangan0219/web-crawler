@@ -52,7 +52,7 @@ public class HtmlParserUtil {
             }
 
         } catch (IOException e) {
-            //Do nothing
+            //Do nothing - Not logging errors in crawling as this can overwhelm the logging
         }
 
         return links;

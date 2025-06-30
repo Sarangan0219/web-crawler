@@ -75,7 +75,6 @@ public class CrawlService {
         return crawlId;
     }
 
-
     public CrawlStatusDto getCrawlStatusDto(String crawlId) {
         CrawlManager manager = activeCrawls.get(crawlId);
 
@@ -99,7 +98,6 @@ public class CrawlService {
                     .build();
         }
 
-        // 🧊 If crawl is completed and stored in DB
         return repository.findById(crawlId)
                 .map(result -> CrawlStatusDto.builder()
                         .crawlId(result.getCrawlId())

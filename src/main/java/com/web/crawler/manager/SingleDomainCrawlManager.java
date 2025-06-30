@@ -70,6 +70,47 @@ public class SingleDomainCrawlManager implements CrawlManager {
                 allowedDomains, this.maxPages, this.maxDepth);
     }
 
+    private static ExecutorService createSharedExecutor() {
+        int corePoolSize = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
+        int maxPoolSize = Math.min(20, Runtime.getRuntime().availableProcessors() * 2);
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                corePoolSize,
+                maxPoolSize,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
+                new ThreadFactory() {
+                    private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread t = new Thread(r, "crawler-pool-" + threadNumber.getAndIncrement());
+                        t.setDaemon(true);
+                        t.setPriority(Thread.NORM_PRIORITY);
+                        return t;
+                    }
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+
+        executor.allowCoreThreadTimeOut(true);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Shutting down shared crawler executor");
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }));
+
+        return executor;
+    }
+
     @Override
     public void start() {
         if (!running.compareAndSet(false, true)) {
@@ -117,7 +158,6 @@ public class SingleDomainCrawlManager implements CrawlManager {
                     break;
                 }
 
-                // Check for completion more frequently
                 if (processedPages.get() >= maxPages) {
                     log.info("Reached maximum pages limit: {}", maxPages);
                     break;
@@ -224,8 +264,8 @@ public class SingleDomainCrawlManager implements CrawlManager {
 
         if (log.isInfoEnabled()) {
             String domain = extractDomain(url);
-            log.info("🔍 Visited [{}]: {} (Found {} links) - Progress: {}/{} - Total Results: {}",
-                    domain, url, links.size(), processed, maxPages, crawlResults.size());
+            log.info("🔍 Visited [{}]: {} (Found {} links) - Total Results: {}",
+                    domain, url, links.size(), crawlResults.size());
 
             if (log.isDebugEnabled()) {
                 log.debug("Links found:");
@@ -243,8 +283,6 @@ public class SingleDomainCrawlManager implements CrawlManager {
     }
 
     private int extractDepthFromUrl(String url) {
-        // This is a simplified approach - you might need to track depth differently
-        // For now, we'll use a basic heuristic based on path segments
         try {
             URI uri = URI.create(url);
             String path = uri.getPath();
@@ -320,46 +358,6 @@ public class SingleDomainCrawlManager implements CrawlManager {
                 log.info("  • {} (Found {} links)", url, links != null ? links.size() : 0);
             }
         }
-    }
-
-    private static ExecutorService createSharedExecutor() {
-        int corePoolSize = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
-        int maxPoolSize = Math.min(20, Runtime.getRuntime().availableProcessors() * 2);
-
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(
-                corePoolSize,
-                maxPoolSize,
-                60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(1000),
-                new ThreadFactory() {
-                    private final AtomicInteger threadNumber = new AtomicInteger(1);
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        Thread t = new Thread(r, "crawler-pool-" + threadNumber.getAndIncrement());
-                        t.setDaemon(true);
-                        t.setPriority(Thread.NORM_PRIORITY);
-                        return t;
-                    }
-                },
-                new ThreadPoolExecutor.CallerRunsPolicy()
-        );
-
-        executor.allowCoreThreadTimeOut(true);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("Shutting down shared crawler executor");
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }));
-
-        return executor;
     }
 
     private record UrlDepthPair(String url, int depth) {
