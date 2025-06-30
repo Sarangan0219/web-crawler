@@ -41,7 +41,7 @@ class CrawlServiceTest {
 
     @Test
     void testStartCrawlAsync() {
-        when(crawlManagerFactory.create(any(), any(), anyInt(), anyInt())).thenReturn(crawlManager);
+        when(crawlManagerFactory.create(any(), any(), anyInt(), anyInt(), anyInt())).thenReturn(crawlManager);
         String crawlId = crawlService.startCrawlAsync(urls, CrawlType.SINGLE_DOMAIN, 10, 2);
         assertNotNull(crawlId);
         verify(crawlRepository).save(any(CrawlResult.class));
@@ -51,7 +51,7 @@ class CrawlServiceTest {
     void testStopCrawl() {
         String crawlId = "test-crawl-id";
 
-        when(crawlManagerFactory.create(urls, CrawlType.SINGLE_DOMAIN, 10, 2))
+        when(crawlManagerFactory.create(urls, CrawlType.SINGLE_DOMAIN, 10, 2, 10))
                 .thenReturn(crawlManager);
         when(crawlManager.isRunning()).thenReturn(true);
 
@@ -95,7 +95,7 @@ class CrawlServiceTest {
                 new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))
         );
 
-        when(crawlManagerFactory.create(anyList(), any(), anyInt(), anyInt())).thenReturn(crawlManager);
+        when(crawlManagerFactory.create(anyList(), any(), anyInt(), anyInt(), anyInt())).thenReturn(crawlManager);
 
         String crawlId = crawlService.handleFileUrls(file, CrawlType.SINGLE_DOMAIN, 5, 1);
         assertNotNull(crawlId);

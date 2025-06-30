@@ -14,20 +14,20 @@ class SingleDomainCrawlManagerTest {
     @Test
     void constructor_rejectsEmptyStartUrls() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new SingleDomainCrawlManager(List.of(), 10, 2));
+                () -> new SingleDomainCrawlManager(List.of(), 10, 2, 10));
         assertEquals("At least one start URL must be provided.", ex.getMessage());
     }
 
     @Test
     void constructor_rejectsInvalidDomains() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new SingleDomainCrawlManager(List.of("invalid-url"), 10, 2));
+                () -> new SingleDomainCrawlManager(List.of("invalid-url"), 10, 2, 10));
         assertEquals("No valid domains found in start URLs.", ex.getMessage());
     }
 
     @Test
     void enqueueUrl_rejectsNullOrOutOfScopeUrls() {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2, 10 );
         manager.enqueueUrl(null, 0);
         manager.enqueueUrl("https://monzo.com/page", 100);
         manager.enqueueUrl("https://otherdomain.com", 0);
@@ -37,7 +37,7 @@ class SingleDomainCrawlManagerTest {
 
     @Test
     void enqueueUrl_acceptsValidUrl() {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2, 10);
 
         manager.enqueueUrl("https://monzo.com/page1", 1);
         Map<String, Object> status = manager.getStatus();
@@ -47,7 +47,7 @@ class SingleDomainCrawlManagerTest {
 
     @Test
     void start_and_stop_crawl() throws Exception {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1,10);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<?> future = executor.submit(manager::start);
         Thread.sleep(500);
@@ -61,7 +61,7 @@ class SingleDomainCrawlManagerTest {
 
     @Test
     void recordCrawlResult_incrementsProcessedPages() {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1, 10);
 
         manager.recordCrawlResult("https://monzo.com", List.of("https://monzo.com/business-banking",
                 "https://monzo.com/sign-up"));
@@ -73,7 +73,7 @@ class SingleDomainCrawlManagerTest {
 
     @Test
     void taskCompleted_decrementsPendingTasks() {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 5, 1, 10);
         try {
             var field = SingleDomainCrawlManager.class.getDeclaredField("pendingTasks");
             field.setAccessible(true);
@@ -97,7 +97,7 @@ class SingleDomainCrawlManagerTest {
 
     @Test
     void getStatus_returnsExpectedKeys() {
-        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2);
+        var manager = new SingleDomainCrawlManager(List.of("https://monzo.com"), 10, 2, 10);
         Map<String, Object> status = manager.getStatus();
 
         assertTrue(status.containsKey("running"));

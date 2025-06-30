@@ -5,12 +5,15 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 import java.util.List;
 
 @Data
+@Builder
 public class CrawlRequest {
     @NotNull(message = "URLs list cannot be null")
     @NotEmpty(message = "URLs list cannot be empty")
