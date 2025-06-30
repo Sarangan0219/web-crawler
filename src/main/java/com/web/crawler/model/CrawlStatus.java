@@ -4,5 +4,6 @@ public enum CrawlStatus {
     RUNNING,
     COMPLETED,
     FAILED,
-    STOPPED
+    STOPPED,
+    NOT_FOUND
 }

@@ -62,7 +62,8 @@ public class InMemoryCrawlRepository implements CrawlRepository {
     @Override
     public List<CrawlResult> findAll(int page, int size, Optional<CrawlStatus> statusFilter) {
         return crawlHistory.values().stream()
-                .filter(result -> statusFilter.isEmpty() || statusFilter.get().name().equalsIgnoreCase(result.getStatus()))
+                .filter(result -> statusFilter.isEmpty()
+                        || statusFilter.get().name().equalsIgnoreCase(result.getStatus().toString()))
                 .sorted(Comparator.comparing(CrawlResult::getStartTime).reversed())
                 .skip((long) page * size)
                 .limit(size)

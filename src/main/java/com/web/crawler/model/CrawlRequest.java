@@ -23,6 +23,6 @@ public class CrawlRequest {
     private Integer maxPages = 100;
 
     @Min(value = 1, message = "maxDepth must be at least 1")
-    @Max(value = 10, message = "maxDepth cannot exceed 10")
+    @Max(value = 50, message = "maxDepth cannot exceed 10")
     private Integer maxDepth = 5;
 }
