@@ -10,6 +10,7 @@ import com.web.crawler.repository.CrawlRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +33,9 @@ public class CrawlService {
 
     private final CrawlRepository repository;
 
+    @Value("${crawler.timeout.minutes}")
+    private int crawlTimeoutMinutes;
+
     @Getter
     private final Map<String, CrawlManager> activeCrawls = new ConcurrentHashMap<>();
 
@@ -40,7 +44,7 @@ public class CrawlService {
 
         CrawlManager manager;
         try {
-            manager = crawlManagerFactory.create(urls, type, maxPages, maxDepth);
+            manager = crawlManagerFactory.create(urls, type, maxPages, maxDepth, crawlTimeoutMinutes);
         } catch (Exception e) {
             log.error("Failed to create crawl manager for {}: {}", crawlId, e.getMessage(), e);
             throw new IllegalArgumentException("Invalid crawl configuration: " + e.getMessage(), e);

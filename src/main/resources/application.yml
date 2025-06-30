@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: Web Crawler
+
+crawler:
+  timeout:
+    minutes: 10

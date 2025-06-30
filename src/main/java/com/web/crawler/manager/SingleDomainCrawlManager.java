@@ -25,17 +25,17 @@ public class SingleDomainCrawlManager implements CrawlManager {
     private final Set<String> allowedDomains;
     private final int maxPages;
     private final int maxDepth;
+    private final int crawlTimeoutMinutes;
     private final AtomicInteger processedPages = new AtomicInteger(0);
 
     private final Map<String, List<String>> crawlResults = new ConcurrentHashMap<>();
 
-    @Value("${crawler.timeout.minutes:15}")
-    private int crawlTimeoutMinutes;
 
-    public SingleDomainCrawlManager(List<String> startUrls, int maxPages, int maxDepth) {
+    public SingleDomainCrawlManager(List<String> startUrls, int maxPages, int maxDepth, int crawlTimeoutMinutes) {
         if (startUrls == null || startUrls.isEmpty()) {
             throw new IllegalArgumentException("At least one start URL must be provided.");
         }
+        this.crawlTimeoutMinutes = crawlTimeoutMinutes;
 
         this.allowedDomains = ConcurrentHashMap.newKeySet();
         for (String url : startUrls) {
