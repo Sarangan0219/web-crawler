@@ -88,8 +88,7 @@ public class CrawlService {
                     .processedPages((Integer) status.getOrDefault("processedPages", 0))
                     .maxPages((Integer) status.getOrDefault("maxPages", 0))
                     .maxDepth((Integer) status.getOrDefault("maxDepth", 0))
-                    .domain((String) status.getOrDefault("domain", ""))
-                    .visitedUrls((List<String>) status.getOrDefault("visitedUrls", List.of()))
+                    .domain(status.getOrDefault("domains", List.of()).toString())
                     .results((Map<String, List<String>>) status.getOrDefault("results", Map.of()))
                     .startTime((LocalDateTime) status.get("startTime"))
                     .endTime((LocalDateTime) status.get("endTime"))
@@ -100,6 +99,7 @@ public class CrawlService {
                     .build();
         }
 
+        // 🧊 If crawl is completed and stored in DB
         return repository.findById(crawlId)
                 .map(result -> CrawlStatusDto.builder()
                         .crawlId(result.getCrawlId())
@@ -108,7 +108,6 @@ public class CrawlService {
                         .maxPages(result.getMaxPages())
                         .maxDepth(result.getMaxDepth())
                         .domain(result.getDomain())
-                        .visitedUrls(result.getVisitedUrls())
                         .results(result.getCrawlResults())
                         .startTime(result.getStartTime())
                         .endTime(result.getEndTime())

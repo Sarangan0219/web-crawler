@@ -2,6 +2,7 @@
 package com.web.crawler.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,11 +22,20 @@ public class HtmlParserUtil {
         List<String> links = new ArrayList<>();
 
         try {
-            Document doc = Jsoup.connect(url)
+            Connection.Response response = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
                     .timeout(TIMEOUT_MS)
                     .followRedirects(true)
-                    .get();
+                    .execute();
+
+            String contentType = response.contentType();
+            if (contentType == null ||
+                    !(contentType.startsWith("text/") || contentType.contains("xml") || contentType.contains("+xml"))) {
+                log.warn("Unhandled content type at {}: {}", url, contentType);
+                return links;
+            }
+
+            Document doc = response.parse();
 
             for (Element link : doc.select("a[href]")) {
                 String href = link.attr("href");
@@ -42,8 +52,7 @@ public class HtmlParserUtil {
             }
 
         } catch (IOException e) {
-            log.error("Failed to fetch or parse HTML from {}: {}", url, e.getMessage());
-            throw e;
+            //Do nothing
         }
 
         return links;

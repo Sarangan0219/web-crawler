@@ -5,6 +5,7 @@ import com.web.crawler.util.UrlUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,8 +27,11 @@ public class SingleDomainCrawlManager implements CrawlManager {
     private final int maxDepth;
     private final int crawlTimeoutMinutes;
     private final AtomicInteger processedPages = new AtomicInteger(0);
-
     private final Map<String, List<String>> crawlResults = new ConcurrentHashMap<>();
+    private final AtomicBoolean crawlCompleted = new AtomicBoolean(false);
+
+    private volatile LocalDateTime startTime;
+    private volatile LocalDateTime endTime;
 
 
     public SingleDomainCrawlManager(List<String> startUrls, int maxPages, int maxDepth, int crawlTimeoutMinutes) {
@@ -69,7 +73,7 @@ public class SingleDomainCrawlManager implements CrawlManager {
     @Override
     public void start() {
         if (!running.compareAndSet(false, true)) {
-            log.warn("Crawl  already running for domains: {}, skipping", allowedDomains);
+            log.warn("Crawl already running for domains: {}, skipping", allowedDomains);
             return;
         }
 
@@ -77,6 +81,7 @@ public class SingleDomainCrawlManager implements CrawlManager {
                 allowedDomains, maxPages, maxDepth);
 
         try {
+            this.startTime = LocalDateTime.now();
             CompletableFuture<Void> crawlFuture = CompletableFuture.runAsync(this::executeCrawl, SHARED_EXECUTOR);
             crawlFuture.get(crawlTimeoutMinutes, TimeUnit.MINUTES);
         } catch (TimeoutException e) {
@@ -86,6 +91,8 @@ public class SingleDomainCrawlManager implements CrawlManager {
             log.error("Crawl execution failed", e);
             throw new RuntimeException("Crawl execution failed", e);
         } finally {
+            this.endTime = LocalDateTime.now();
+            crawlCompleted.set(true);
             shutdown();
         }
     }
@@ -97,7 +104,13 @@ public class SingleDomainCrawlManager implements CrawlManager {
 
                 if (urlPair != null && urlPair.depth <= maxDepth) {
                     pendingTasks.incrementAndGet();
-                    SHARED_EXECUTOR.submit(new CrawlWorker(urlPair.url, urlPair.depth, this));
+                    SHARED_EXECUTOR.submit(() -> {
+                        try {
+                            new CrawlWorker(urlPair.url, urlPair.depth, this).run();
+                        } finally {
+                            taskCompleted();
+                        }
+                    });
 
                 } else if (urlPair == null && pendingTasks.get() == 0) {
                     log.info("No more URLs to process and no pending tasks. Crawl complete.");
@@ -111,14 +124,27 @@ public class SingleDomainCrawlManager implements CrawlManager {
                 }
             }
 
+            log.info("Main crawl loop finished. Waiting for {} pending tasks to complete...", pendingTasks.get());
+
             long waitStart = System.currentTimeMillis();
+            int lastPendingCount = pendingTasks.get();
+
             while (pendingTasks.get() > 0 && !shouldStop.get()) {
-                if (System.currentTimeMillis() - waitStart > 30000) { // 30 second timeout
-                    log.warn("Timeout waiting for pending tasks to complete");
+                int currentPending = pendingTasks.get();
+                if (currentPending != lastPendingCount) {
+                    log.info("Pending tasks: {}, Processed pages: {}", currentPending, processedPages.get());
+                    lastPendingCount = currentPending;
+                }
+
+                if (System.currentTimeMillis() - waitStart > 30000) {
+                    log.warn("Timeout waiting for {} pending tasks to complete", pendingTasks.get());
                     break;
                 }
-                Thread.sleep(100);
+                Thread.sleep(500);
             }
+
+            log.info("All tasks completed. Final processed pages: {}, Final results count: {}",
+                    processedPages.get(), crawlResults.size());
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -136,30 +162,38 @@ public class SingleDomainCrawlManager implements CrawlManager {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        crawlCompleted.set(true);
         shutdown();
     }
 
     @Override
     public boolean isRunning() {
-        return running.get();
+        return running.get() && !crawlCompleted.get();
     }
 
     @Override
     public Map<String, Object> getStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("running", running.get());
+        status.put("completed", crawlCompleted.get());
         status.put("processedPages", processedPages.get());
         status.put("pendingTasks", pendingTasks.get());
         status.put("queueSize", urlQueue.size());
         status.put("visitedUrlsCount", visitedUrls.size());
+        status.put("visitedUrls", new ArrayList<>(visitedUrls));
         status.put("maxPages", maxPages);
         status.put("maxDepth", maxDepth);
         status.put("domains", new ArrayList<>(allowedDomains));
-        // Only return results count for large result sets
         status.put("resultsCount", crawlResults.size());
-        if (crawlResults.size() <= 100) {
-            status.put("results", new HashMap<>(crawlResults));
+        status.put("results", new HashMap<>(crawlResults));
+        status.put("hasResults", !crawlResults.isEmpty());
+        if (log.isDebugEnabled()) {
+            log.debug("Status check - Results: {}, Processed: {}, Running: {}",
+                    crawlResults.size(), processedPages.get(), running.get());
         }
+        status.put("startTime", startTime);
+        status.put("endTime", endTime);
+
         return status;
     }
 
@@ -178,26 +212,54 @@ public class SingleDomainCrawlManager implements CrawlManager {
     }
 
     public void recordCrawlResult(String url, List<String> links) {
-        List<String> limitedLinks = links.size() > 100 ? links.subList(0, 100) : links;
+        if (url == null || links == null) {
+            log.warn("Null URL or links provided to recordCrawlResult");
+            return;
+        }
+
+        List<String> limitedLinks = links.size() > 100 ? links.subList(0, 100) : new ArrayList<>(links);
         crawlResults.put(url, limitedLinks);
 
         int processed = processedPages.incrementAndGet();
 
         if (log.isInfoEnabled()) {
             String domain = extractDomain(url);
-            log.info("🔍 Visited [{}]: {} (Found {} links) - Progress: {}/{}",
-                    domain, url, links.size(), processed, maxPages);
+            log.info("🔍 Visited [{}]: {} (Found {} links) - Progress: {}/{} - Total Results: {}",
+                    domain, url, links.size(), processed, maxPages, crawlResults.size());
 
             if (log.isDebugEnabled()) {
+                log.debug("Links found:");
                 for (String link : limitedLinks) {
                     log.debug("  → {}", link);
                 }
             }
         }
+
+        for (String link : links) {
+            if (link != null && !link.trim().isEmpty()) {
+                enqueueUrl(link, extractDepthFromUrl(url) + 1);
+            }
+        }
+    }
+
+    private int extractDepthFromUrl(String url) {
+        // This is a simplified approach - you might need to track depth differently
+        // For now, we'll use a basic heuristic based on path segments
+        try {
+            URI uri = URI.create(url);
+            String path = uri.getPath();
+            if (path == null || path.equals("/")) return 0;
+            return path.split("/").length - 1;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public void taskCompleted() {
-        pendingTasks.decrementAndGet();
+        int remaining = pendingTasks.decrementAndGet();
+        if (log.isDebugEnabled()) {
+            log.debug("Task completed. Remaining tasks: {}, Processed pages: {}", remaining, processedPages.get());
+        }
     }
 
     private boolean isSameDomain(String url) {
@@ -229,6 +291,12 @@ public class SingleDomainCrawlManager implements CrawlManager {
 
         log.info("\n✅ Crawling finished for domains: {}", allowedDomains);
         log.info("Total pages crawled: {}", processedPages.get());
+        log.info("Total results collected: {}", crawlResults.size());
+        log.info("Pending tasks at shutdown: {}", pendingTasks.get());
+
+        if (crawlResults.isEmpty()) {
+            log.warn("⚠️  No results were collected during crawling. Check CrawlWorker implementation.");
+        }
 
         if (visitedUrls.size() <= 50) {
             logDetailedResults();
@@ -248,7 +316,8 @@ public class SingleDomainCrawlManager implements CrawlManager {
         for (Map.Entry<String, List<String>> entry : urlsByDomain.entrySet()) {
             log.info("Domain: {}", entry.getKey());
             for (String url : entry.getValue()) {
-                log.info("  • {}", url);
+                List<String> links = crawlResults.get(url);
+                log.info("  • {} (Found {} links)", url, links != null ? links.size() : 0);
             }
         }
     }

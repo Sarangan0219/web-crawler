@@ -2,9 +2,11 @@ package com.web.crawler.service;
 
 import com.web.crawler.manager.SingleDomainCrawlManager;
 import com.web.crawler.util.HtmlParserUtil;
+import com.web.crawler.util.UrlUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CrawlWorker implements Runnable {
@@ -23,10 +25,17 @@ public class CrawlWorker implements Runnable {
     public void run() {
         try {
             List<String> extractedUrls = HtmlParserUtil.extractLinks(url);
-            manager.recordCrawlResult(url, extractedUrls);
 
-            // Enqueue found URLs for next depth level
-            for (String foundUrl : extractedUrls) {
+            // Filter to only same-domain links before processing
+            String targetDomain = UrlUtils.extractDomain(url);
+            List<String> sameDomainUrls = extractedUrls.stream()
+                    .filter(link -> UrlUtils.isSameDomain(link, targetDomain))
+                    .collect(Collectors.toList());
+
+            manager.recordCrawlResult(url, sameDomainUrls);
+
+            // Enqueue only same-domain URLs for next depth level
+            for (String foundUrl : sameDomainUrls) {
                 manager.enqueueUrl(foundUrl, depth + 1);
             }
 

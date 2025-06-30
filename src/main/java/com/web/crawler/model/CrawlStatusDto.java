@@ -20,7 +20,6 @@ public class CrawlStatusDto {
     private int maxPages;
     private int maxDepth;
     private String domain;
-    private List<String> visitedUrls;
     private Map<String, List<String>> results;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
