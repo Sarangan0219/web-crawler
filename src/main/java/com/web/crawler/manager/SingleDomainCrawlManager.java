@@ -262,17 +262,24 @@ public class SingleDomainCrawlManager implements CrawlManager {
 
         int processed = processedPages.incrementAndGet();
 
-        if (log.isInfoEnabled()) {
-            String domain = extractDomain(url);
-            log.info("🔍 Visited [{}]: {} (Found {} links) - Total Results: {}",
-                    domain, url, links.size(), crawlResults.size());
+        if (processed >= maxPages) {
+            log.info("Reached maximum pages limit: {}", maxPages);
+            shouldStop.set(true);
+            return;
+        }
 
-            if (log.isDebugEnabled()) {
-                log.debug("Links found:");
-                for (String link : limitedLinks) {
-                    log.debug("  → {}", link);
-                }
-            }
+        String domain = extractDomain(url);
+
+        log.info("✅ Visited: {}", url);
+        log.info("   Found {} links:", links.size());
+
+        int displayLimit = Math.min(15, links.size());
+        for (int i = 0; i < displayLimit; i++) {
+            log.info("   → {}", links.get(i));
+        }
+
+        if (links.size() > displayLimit) {
+            log.info("   → ... ({} more)", links.size() - displayLimit);
         }
 
         for (String link : links) {

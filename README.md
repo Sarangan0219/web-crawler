@@ -15,7 +15,6 @@ The service is designed to be scalable, extensible, and production-ready with pr
 * Java 17+
 * Maven 3.6+
 
-
 ### Build and Run
 
 ```bash
@@ -67,11 +66,6 @@ POST /api/v1/crawlers/{crawlId}/stop
 ### 5. Get Crawl History
 ```http
 GET /api/v1/crawlers/history?page=0&size=10&status=COMPLETED
-```
-
-### 6. Cleanup History
-```http
-POST /api/v1/crawlers/cleanup
 ```
 
 ## 🧠 Architecture & Design
@@ -131,3 +125,20 @@ url,description
 https://example.com,Main site
 https://blog.example.com,Blog
 ```
+
+## Crawl Flexibility
+
+To give users fine-grained control over the crawling behavior, the service supports several key parameters:
+
+### Core Parameters
+
+**`maxPages`**: Limits the total number of pages the crawler will visit for each job.
+- This helps prevent runaway crawls and keeps resource usage predictable.
+
+**`maxDepth`**: Controls the link traversal depth from the starting URLs (i.e., how many levels deep to follow links).
+- This avoids excessive recursion into deep site structures.
+
+**`strategy`**: Defines the crawling scope and domain restrictions.
+- `"SINGLE_DOMAIN"` - Restricts crawling to the exact same domain as the starting URL
+- When you start with `https://monzo.com/`, it crawls all pages on the `monzo.com` website only
+- External links (e.g., to `facebook.com` or `community.monzo.com`) are filtered out and not followed
