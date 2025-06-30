@@ -1,4 +1,3 @@
-
 package com.web.crawler.manager;
 
 import com.web.crawler.model.CrawlType;
@@ -6,9 +5,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-
-import java.util.List;
 import java.util.Objects;
 
 @Component

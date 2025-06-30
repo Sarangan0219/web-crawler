@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class InMemoryCrawlRepository implements CrawlRepository {
 
-    private final Map<String, CrawlResult> crawlHistory = new ConcurrentHashMap<>();
     private static final int MAX_HISTORY_SIZE = 100;
+    private final Map<String, CrawlResult> crawlHistory = new ConcurrentHashMap<>();
 
     @Override
     public void save(CrawlResult crawlResult) {

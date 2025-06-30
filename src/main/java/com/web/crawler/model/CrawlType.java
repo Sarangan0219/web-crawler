@@ -13,11 +13,6 @@ public enum CrawlType {
         this.value = value;
     }
 
-    @JsonValue
-    public String getValue() {
-        return value;
-    }
-
     @JsonCreator
     public static CrawlType fromValue(String value) {
         for (CrawlType type : CrawlType.values()) {
@@ -26,5 +21,10 @@ public enum CrawlType {
             }
         }
         throw new IllegalArgumentException("Unknown CrawlType: " + value);
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

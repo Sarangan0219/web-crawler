@@ -32,12 +32,10 @@ public class CrawlService {
     private final CrawlManagerFactory crawlManagerFactory;
 
     private final CrawlRepository repository;
-
-    @Value("${crawler.timeout.minutes}")
-    private int crawlTimeoutMinutes;
-
     @Getter
     private final Map<String, CrawlManager> activeCrawls = new ConcurrentHashMap<>();
+    @Value("${crawler.timeout.minutes}")
+    private int crawlTimeoutMinutes;
 
     public String startCrawlAsync(List<String> urls, CrawlType type, int maxPages, int maxDepth) {
         String crawlId = UUID.randomUUID().toString();

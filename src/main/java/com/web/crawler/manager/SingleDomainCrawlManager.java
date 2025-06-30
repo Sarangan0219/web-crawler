@@ -3,7 +3,6 @@ package com.web.crawler.manager;
 import com.web.crawler.service.CrawlWorker;
 import com.web.crawler.util.UrlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URI;
 import java.util.*;

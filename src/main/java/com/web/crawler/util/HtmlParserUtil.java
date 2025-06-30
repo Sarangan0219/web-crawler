@@ -69,7 +69,7 @@ public class HtmlParserUtil {
         try {
             URI uri = URI.create(url);
             String scheme = uri.getScheme();
-            return "http".equals(scheme) || "https".equals(scheme);
+            return "http" .equals(scheme) || "https" .equals(scheme);
         } catch (Exception e) {
             return false;
         }

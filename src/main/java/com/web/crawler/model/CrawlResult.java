@@ -1,4 +1,5 @@
 package com.web.crawler.model;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
