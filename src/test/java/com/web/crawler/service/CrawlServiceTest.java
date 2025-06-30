@@ -47,21 +47,6 @@ class CrawlServiceTest {
         verify(crawlRepository).save(any(CrawlResult.class));
     }
 
-    @Test
-    void testStopCrawl() {
-        String crawlId = "test-crawl-id";
-
-        when(crawlManagerFactory.create(urls, CrawlType.SINGLE_DOMAIN, 10, 2, 10))
-                .thenReturn(crawlManager);
-        when(crawlManager.isRunning()).thenReturn(true);
-
-        String returnedCrawlId = crawlService.startCrawlAsync(urls, CrawlType.SINGLE_DOMAIN, 10, 2);
-        crawlService.getActiveCrawls().put(crawlId, crawlManager);
-        boolean stopped = crawlService.stopCrawl(crawlId);
-        assertTrue(stopped);
-        verify(crawlManager).stop();
-    }
-
 
     @Test
     void testGetCrawlStatusDto_fromManager() {

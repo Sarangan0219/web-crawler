@@ -1,5 +1,6 @@
 package com.web.crawler.model;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class CrawlResult {
     private String crawlId;
     private CrawlType strategy;
