@@ -7,6 +7,7 @@ import com.web.crawler.model.CrawlStatus;
 import com.web.crawler.model.CrawlStatusDto;
 import com.web.crawler.model.CrawlType;
 import com.web.crawler.repository.CrawlRepository;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,10 @@ import java.util.stream.Collectors;
 public class CrawlService {
 
     private final CrawlManagerFactory crawlManagerFactory;
+
     private final CrawlRepository repository;
+
+    @Getter
     private final Map<String, CrawlManager> activeCrawls = new ConcurrentHashMap<>();
 
     public String startCrawlAsync(List<String> urls, CrawlType type, int maxPages, int maxDepth) {

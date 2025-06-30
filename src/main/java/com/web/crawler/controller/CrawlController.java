@@ -47,12 +47,8 @@ public class CrawlController {
 
     @PostMapping
     public ResponseEntity<CrawlResponseDto> initiateCrawling(@Valid @RequestBody CrawlRequest request) {
-        String crawlId = crawlService.startCrawlAsync(
-                request.getUrls(),
-                request.getStrategy(),
-                request.getMaxPages(),
-                request.getMaxDepth()
-        );
+        String crawlId = crawlService.startCrawlAsync(request.getUrls(), request.getStrategy(),
+                request.getMaxPages(), request.getMaxDepth());
 
         return ResponseEntity.ok(CrawlResponseDto.builder()
                 .crawlId(crawlId)
