@@ -137,10 +137,6 @@ public class CrawlService {
         return repository.findAll();
     }
 
-    public void cleanupHistory() {
-        repository.cleanup();
-    }
-
     private void updateCrawlResult(String crawlId, CrawlStatus status, String errorMessage) {
         repository.findById(crawlId).ifPresent(result -> {
             result.setStatus(status);

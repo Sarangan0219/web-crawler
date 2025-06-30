@@ -85,15 +85,4 @@ public class CrawlController {
     ) {
         return ResponseEntity.ok(crawlService.getCrawlHistory(page, size, Optional.ofNullable(status)));
     }
-
-    @PostMapping("/cleanup")
-    public ResponseEntity<CrawlResponseDto> cleanupHistory() {
-        crawlService.cleanupHistory();
-        return ResponseEntity.ok(CrawlResponseDto.builder()
-                .status(CrawlStatus.COMPLETED)
-                .message("History cleaned up")
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
-    }
 }

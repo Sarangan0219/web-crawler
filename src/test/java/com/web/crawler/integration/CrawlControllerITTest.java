@@ -274,27 +274,7 @@ public class CrawlControllerITTest {
         verify(crawlService).getCrawlHistory(0, 10, Optional.empty());
     }
 
-    @Test
-    void cleanupHistory_returnsCompletedStatus() {
-        // Arrange
-        doNothing().when(crawlService).cleanupHistory();
 
-        // Act & Assert
-        webTestClient
-                .post()
-                .uri(BASE_URL + "/cleanup")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(CrawlResponseDto.class)
-                .value(res -> {
-                    assertThat(res.getStatus()).isEqualTo(CrawlStatus.COMPLETED);
-                    assertThat(res.getMessage()).isEqualTo("History cleaned up");
-                    assertThat(res.getTimestamp()).isBeforeOrEqualTo(LocalDateTime.now());
-                    assertThat(res.getCrawlId()).isNull();
-                });
-
-        verify(crawlService).cleanupHistory();
-    }
 
     @Test
     void endToEndCrawlWorkflow_completesSuccessfully() {

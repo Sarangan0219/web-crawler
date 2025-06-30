@@ -40,21 +40,6 @@ public class InMemoryCrawlRepository implements CrawlRepository {
     }
 
     @Override
-    public void cleanup() {
-        if (crawlHistory.size() > MAX_HISTORY_SIZE) {
-            List<CrawlResult> sorted = crawlHistory.values().stream()
-                    .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-                    .toList();
-
-            crawlHistory.clear();
-            sorted.stream().limit(MAX_HISTORY_SIZE).forEach(result ->
-                    crawlHistory.put(result.getCrawlId(), result));
-
-            log.info("Cleaned up crawl history, keeping {} most recent entries", MAX_HISTORY_SIZE);
-        }
-    }
-
-    @Override
     public boolean existsById(String crawlId) {
         return crawlHistory.containsKey(crawlId);
     }

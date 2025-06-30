@@ -15,8 +15,6 @@ public interface CrawlRepository {
 
     void deleteById(String crawlId);
 
-    void cleanup();
-
     boolean existsById(String crawlId);
 
     List<CrawlResult> findAll(int page, int size, Optional<CrawlStatus> statusFilter);
