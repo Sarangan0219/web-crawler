@@ -271,7 +271,7 @@ public class SingleDomainCrawlManager implements CrawlManager {
         String domain = extractDomain(url);
 
         log.info("✅ Visited: {}", url);
-        log.info("   Found {} links:", links.size());
+        log.info("     Found {} links:", links.size());
 
         int displayLimit = Math.min(15, links.size());
         for (int i = 0; i < displayLimit; i++) {
