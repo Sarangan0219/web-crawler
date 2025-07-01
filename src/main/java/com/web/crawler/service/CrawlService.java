@@ -32,8 +32,10 @@ public class CrawlService {
     private final CrawlManagerFactory crawlManagerFactory;
 
     private final CrawlRepository repository;
+
     @Getter
     private final Map<String, CrawlManager> activeCrawls = new ConcurrentHashMap<>();
+
     @Value("${crawler.timeout.minutes}")
     private int crawlTimeoutMinutes;
 

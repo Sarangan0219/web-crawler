@@ -26,7 +26,6 @@ public class CrawlWorker implements Runnable {
         try {
             List<String> extractedUrls = HtmlParserUtil.extractLinks(url);
 
-            // Filter to only same-domain links before processing
             String targetDomain = UrlUtils.extractDomain(url);
             List<String> sameDomainUrls = extractedUrls.stream()
                     .filter(link -> UrlUtils.isSameDomain(link, targetDomain))
@@ -34,7 +33,6 @@ public class CrawlWorker implements Runnable {
 
             manager.recordCrawlResult(url, sameDomainUrls);
 
-            // Enqueue only same-domain URLs for next depth level
             for (String foundUrl : sameDomainUrls) {
                 manager.enqueueUrl(foundUrl, depth + 1);
             }

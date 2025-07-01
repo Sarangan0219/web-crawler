@@ -244,6 +244,7 @@ public class SingleDomainCrawlManager implements CrawlManager {
         }
 
         String normalizedUrl = UrlUtils.normalizeUrl(url);
+        // We don't need  isSameDomain check. that has been already done
         if (normalizedUrl != null && isSameDomain(normalizedUrl) && visitedUrls.add(normalizedUrl)) {
             if (!urlQueue.offer(new UrlDepthPair(normalizedUrl, depth))) {
                 log.debug("URL queue full, skipping: {}", normalizedUrl);
