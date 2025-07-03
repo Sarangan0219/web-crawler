@@ -141,7 +141,7 @@ To give users fine-grained control over the crawling behavior, the service suppo
 **`strategy`**: Defines the crawling scope and domain restrictions.
 - `"SINGLE_DOMAIN"` - Restricts crawling to the exact same domain as the starting URL
 - When you start with `https://monzo.com/`, it crawls all pages on the `monzo.com` website only
-- External links (e.g., to `facebook.com` or `community.monzo.com`) are filtered out and not followed
+- External links (e.g., to `facebook.com` or `google.com`) are filtered out and not followed
 
 # Web Crawler Implementation: Detailed Analysis
 
